@@ -1,32 +1,34 @@
 # -*- mode: python ; coding: utf-8 -*-
-# NovaAgent - Spec tolerante a carpetas faltantes
+# NovaAgent - Spec con DLLs nativas de llama-cpp incluidas
 import sys
 from pathlib import Path
+from PyInstaller.utils.hooks import collect_all
 
 PROJECT_DIR = Path(SPECPATH).parent
 
 block_cipher = None
 
-# Solo incluir carpetas que existan realmente en el repositorio
-datas = []
+# REPARACION: recoger TODO llama_cpp (incluye sus DLLs nativas)
+datas_llama, binaries_llama, hiddenimports_llama = collect_all('llama_cpp')
+
+# Carpetas del proyecto que existan
+datas = list(datas_llama)
 for folder in ['config', 'docs', 'assets']:
     if (PROJECT_DIR / folder).is_dir():
         datas.append((folder, folder))
 
-# Icono opcional: si no existe, se compila sin icono
 icon_path = PROJECT_DIR / 'assets' / 'icon.ico'
 icon_value = str(icon_path) if icon_path.exists() else None
 
 a = Analysis(
     ['main.py'],
     pathex=[str(PROJECT_DIR)],
-    binaries=[],
+    binaries=list(binaries_llama),
     datas=datas,
     hiddenimports=[
         'PySide6.QtCore',
         'PySide6.QtGui',
         'PySide6.QtWidgets',
-        'llama_cpp',
         'novaagent',
         'novaagent.engine',
         'novaagent.engine.llm_engine',
@@ -37,7 +39,7 @@ a = Analysis(
         'novaagent.ui._desktop_impl',
         'novaagent.core',
         'novaagent.utils',
-    ],
+    ] + list(hiddenimports_llama),
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -61,7 +63,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
