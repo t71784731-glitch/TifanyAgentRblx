@@ -1,7 +1,6 @@
 ; =====================================================
-; NovaAgent - Instalador de Windows (version tolerante)
-; Sin icono personalizado, sin carpetas opcionales,
-; sin permisos de administrador.
+; NovaAgent - Instalador de Windows (version corregida)
+; Rutas dentro del repositorio (sin ..\)
 ; =====================================================
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
@@ -15,7 +14,6 @@ RequestExecutionLevel user
 !define VERSION "1.0.0"
 !define MUI_ABORTWARNING
 
-; ----- Paginas del asistente -----
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -28,25 +26,24 @@ RequestExecutionLevel user
 
 !insertmacro MUI_LANGUAGE "Spanish"
 
-; ----- Instalacion -----
 Section "Instalar"
     SectionIn RO
 
-    ; El ejecutable (siempre existe tras PyInstaller)
+    ; El ejecutable creado por PyInstaller (carpeta dist del proyecto)
     SetOutPath $INSTDIR
-    File "..\dist\NovaAgent.exe"
+    File "dist\NovaAgent.exe"
 
-    ; Configuracion: solo si existe en el repositorio
-    !if /FileExists "..\config\config.example.json"
+    ; Configuracion: solo si existe en el proyecto
+    !if /FileExists "config\config.example.json"
         SetOutPath "$INSTDIR\config"
-        File /r "..\config\*"
+        File /r "config\*"
     !endif
 
-    ; Carpetas de datos del usuario (modelos y logs)
+    ; Carpetas de datos del usuario
     CreateDirectory "$APPDATA\NovaAgent\models"
     CreateDirectory "$APPDATA\NovaAgent\logs"
 
-    ; Accesos directos (Menu Inicio y Escritorio)
+    ; Accesos directos
     CreateDirectory "$SMPROGRAMS\NovaAgent"
     CreateShortcut "$SMPROGRAMS\NovaAgent\NovaAgent.lnk" "$INSTDIR\NovaAgent.exe"
     CreateShortcut "$SMPROGRAMS\NovaAgent\Desinstalar.lnk" "$INSTDIR\Uninstall.exe"
@@ -59,11 +56,9 @@ Section "Instalar"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\NovaAgent" "DisplayVersion" "${VERSION}"
     WriteRegStr HKCU "Software\NovaAgent" "InstallDir" "$INSTDIR"
 
-    ; Desinstalador
     WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
 
-; ----- Desinstalacion -----
 Section "Uninstall"
     RMDir /r "$INSTDIR"
     Delete "$DESKTOP\NovaAgent.lnk"
@@ -74,7 +69,6 @@ Section "Uninstall"
     DeleteRegKey HKCU "Software\NovaAgent"
 SectionEnd
 
-; ----- Comprobacion inicial -----
 Function .onInit
     ${IfNot} ${RunningX64}
         MessageBox MB_ICONSTOP "NovaAgent requiere Windows de 64 bits."
